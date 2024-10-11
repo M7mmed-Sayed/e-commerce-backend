@@ -25,12 +25,25 @@ Goal: Build a backend system for an online marketplace that supports users, prod
 # **Features**
 
    - ## user API 
-       - `localhost/account/register/` register / create new user
-       - `localhost/account/login/` login
-       - `localhost/account/logout/` logout
-       - `localhost/account/` get the current Autherized user data
-       - `localhost/account/update/{abc}` update username data if it's Autherized and the curent user username is `abc`
-       
+       - `/account/register/` POST register / create new user
+       - `/account/login/` POST login
+       - `/account/logout/` POST logout
+       - `/account/` GET the current Autherized user data
+       - `/account/update/{abc}` PUT update username data if it's Autherized and the curent user username is `abc`
+   - ## categories API 
+       - `/products/category/` Post action only admins or employee can create  category
+       - `/products/category/` GET action any one can retrieve list categories
+       - `/products/category/id` GET action any one can retrieve  category by id
+       - `/products/category/id` PUT Action only admins or employee can Edit category by id
+       - `/products/category/id` DELETE Action only admins or employee can Destroy category by id
+   - ## Products API 
+        - `/products/` Post action only sellers can Add Product
+        - `/products/` GET action any one can retrieve list products
+        - `/products/id` GET action any one can retrieve a product by id
+        - `/products/id` PUT action only owner for the product can edit  by id
+        - `/products/id` DELETE action only owner for the product can edit  by id
+        
+
 
 
 # **Contact Information:**
