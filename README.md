@@ -42,6 +42,17 @@ Goal: Build a backend system for an online marketplace that supports users, prod
         - `/products/id` GET action any one can retrieve a product by id
         - `/products/id` PUT action only owner for the product can edit  by id
         - `/products/id` DELETE action only owner for the product can edit  by id
+   - ## Cart Item API 
+        - `/cart/item/product_id` POST add product_id to the cart
+        - `/cart/item/product_id` Get Cart-item by product_id from the cart
+        - `/cart/item/` Get Cart-items by  from the cart
+        - `/cart/item/product_id` PUT edit the quantity for the current-item `product` 
+        - `/cart/item/product_id` DELETE the cart-item  by product_id
+   - ## Order API 
+        - `/cart/checkout/` POST take the items form the cart and create an order
+        - `/cart/orders/` GET action  list of orders
+        - `/cart/orders/id` GET action   retrieve a order by id if he is autherized for that  or he is admin
+        - `/cart/orders/id` PUT action only owner for the product can edit  by id and edit order statue
         
 
 
