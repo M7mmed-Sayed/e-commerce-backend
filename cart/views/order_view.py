@@ -9,7 +9,6 @@ from ..serializers import OrderSerializer
 from django.db import transaction
 from accounts.models import UserType
 import stripe
-stripe.api_key = "sk_test_51Q9NPe2LX60mx4M2HmtfDyTnUFUOoPTRoejXrSwxAUDVpU5JJda7XgZpnwE708UtHqsKrdt4wB8jEOgXb2zF2VNM005NDIgEwi"
 
 class CheckOutOrderView(CreateAPIView):
     """
