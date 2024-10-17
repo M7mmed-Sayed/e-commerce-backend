@@ -8,6 +8,8 @@ from products.models import Product
 from ..serializers import OrderSerializer
 from django.db import transaction
 from accounts.models import UserType
+import stripe
+stripe.api_key = "sk_test_51Q9NPe2LX60mx4M2HmtfDyTnUFUOoPTRoejXrSwxAUDVpU5JJda7XgZpnwE708UtHqsKrdt4wB8jEOgXb2zF2VNM005NDIgEwi"
 
 class CheckOutOrderView(CreateAPIView):
     """
@@ -28,7 +30,14 @@ class CheckOutOrderView(CreateAPIView):
         # if there is no items so we cann't do an order
         if not cart_items.exists():
             return Response({'no': 'the cart is Empty'}, status=status.HTTP_400_BAD_REQUEST)
-
+        checkout_id = request.GET.get('session_id', None)
+        """
+        refund the payment
+        roalback=stripe.checkout.Session.retrieve(checkout_id)
+        print(f"id : {roalback.payment_intent}")
+        refund =stripe.Refund.create(payment_intent=roalback.payment_intent)
+        print(refund)
+        """
         #useing transaction to validate that
         with transaction.atomic():
             order_data = {
@@ -43,7 +52,7 @@ class CheckOutOrderView(CreateAPIView):
                     product = cart_item.product
                     if product.stock_quantity < cart_item.quantity:
                         return Response({'Product': f"Not enough  product at {product.name} stock_quantity."}, status=status.HTTP_400_BAD_REQUEST)
-                    product.stock_quantity -= cart_item.quantity
+                    #product.stock_quantity -= cart_item.quantity
                     product.save()
                     OrderItem.objects.create(
                         order=order,
@@ -52,8 +61,14 @@ class CheckOutOrderView(CreateAPIView):
                         quantity=cart_item.quantity,
                         order_item_price=product.price 
                     )
-                cart_items.delete()
-                return Response(order_serializer.data, status=status.HTTP_201_CREATED)
+                respone={
+                    'respone':
+                    order_serializer.data,
+                    'checkout_id':checkout_id
+                }
+
+                #cart_items.delete()
+                return Response(respone, status=status.HTTP_201_CREATED)
             else:
                 #rollback if the is at least one error or missing something
                 transaction.set_rollback(True)

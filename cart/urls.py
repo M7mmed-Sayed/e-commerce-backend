@@ -17,7 +17,7 @@ urlpatterns = [
         'get': 'list',
         
     }),name='cartitems'),
-     path('checkout', CheckOutOrderView.as_view(),name='checkout'),
+     path('checkout/', CheckOutOrderView.as_view(),name='checkout'),
      path('orders', OrderViewSet.as_view({
         'get': 'list',
         
@@ -27,7 +27,7 @@ urlpatterns = [
         'put': 'update',  
     
     }),name='order-datail'),
-
+   
 
 
 
