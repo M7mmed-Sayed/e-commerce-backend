@@ -10,6 +10,7 @@ from accounts.models import UserType
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 from rest_framework.decorators import api_view,permission_classes
+from django.db import transaction
 
 class CartItemViewSet(ModelViewSet):
     """
@@ -35,62 +36,84 @@ class CartItemViewSet(ModelViewSet):
     def get_product(self):
         product_pk = self.kwargs.get('product_pk', None)
         try:
-           product= Product.objects.get(pk=product_pk)
+            product = Product.objects.select_for_update().get(pk=product_pk)# to lock the product avoiding critacl section
         except Product.DoesNotExist:
             return None
         return product
 
     # add product to the cart
     def create(self, request, *args, **kwargs):
-        user=request.user
-        try:
-            product=self.get_product()
-            if product is None:
-                return Response({"Not Found": "Product not Fount"}, status=status.HTTP_404_NOT_FOUND)
-            CartItem.objects.get(user=user,product=product)
-        except CartItem.DoesNotExist:
-            serializer=self.get_serializer(data={'quantity':1},partial=True)
-            if serializer.is_valid():
-                serializer.save(user=user,product=product,quantity=1)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            return super().create(request, *args, **kwargs)
-        return Response({"Exist": "this product was add to Caart befor"}, status=status.HTTP_400_BAD_REQUEST)
+        with transaction.atomic():
+            user=request.user
+            try:
+                product=self.get_product()
+                if product is None:
+                    return Response({"Not Found": "Product not Fount"}, status=status.HTTP_404_NOT_FOUND)
+                CartItem.objects.get(user=user,product=product)
+            except CartItem.DoesNotExist:
+                serializer=self.get_serializer(data={'quantity':1},partial=True)
+                new_stock_quantity= product.stock_quantity-1 
+                if new_stock_quantity < 0:
+                    return Response({"Error": "stock is empty"}, status=status.HTTP_400_BAD_REQUEST)
+ 
+                if serializer.is_valid():
+                    serializer.save(user=user,product=product,quantity=1)
+                    product.stock = new_stock
+                    product.save()
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                else:
+                    transaction.set_rollback(True)
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return super().create(request, *args, **kwargs)
+            return Response({"Exist": "this product was add to Caart befor"}, status=status.HTTP_400_BAD_REQUEST)
    
     # update quantity for the product at the cart
     def update(self, request, *args, **kwargs):
-        user=request.user
-        quantity=request.data.get("quantity")
-        try:
-            product=self.get_product()
-            if product is None:
-                return Response({"Not Found": "Product not Fount"}, status=status.HTTP_404_NOT_FOUND)
-            cart_item=CartItem.objects.get(user=user,product=product)
-            quantity+=cart_item.quantity
-            cart_item.save()
-            serializer=self.get_serializer(cart_item,data={'quantity':quantity},partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except CartItem.DoesNotExist:
-            return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
+        with transaction.atomic():
+            user=request.user
+            quantity=request.data.get("quantity")
+            try:
+                product=self.get_product()
+                if product is None:
+                    return Response({"Not Found": "Product not Fount"}, status=status.HTTP_404_NOT_FOUND)
 
+                new_stock_quantity= product.stock_quantity-quantity
+                if new_stock_quantity < 0:
+                    return Response({"Error": "product does'nt have this quantity "}, status=status.HTTP_400_BAD_REQUEST)
 
-    # remove the product from the cart
-    def destroy(self, request, *args, **kwargs):
-        user=request.user
-        try:
-            product=self.get_product()
-            if product is None:
-                return Response({"Not Found": "Product not Fount"}, status=status.HTTP_404_NOT_FOUND)   
-            cart_item=CartItem.objects.get(user=user,product=product)
-            cart_item.delete()
-            return Response({"ok":" you removed the product from the cart"}, status=status.HTTP_202_ACCEPTED)
-        except CartItem.DoesNotExist:
-            return Response({"Not Found": "CartItem not Exist"}, status=status.HTTP_404_NOT_FOUND)
+                cart_item=CartItem.objects.get(user=user,product=product)
+                updated_quantity+=cart_item.quantity
+                if updated_quantity<0:
+                    return Response({"Error": "you don't have this quantatiy for this product at   the cart"}, status=status.HTTP_400_BAD_REQUEST) 
+                
+                cart_item.save()
+                serializer=self.get_serializer(cart_item,data={'quantity':updated_quantity},partial=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    product.stock = new_stock
+                    product.save()
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            except CartItem.DoesNotExist:
+                return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
+
+        # remove the product from the cart
+        def destroy(self, request, *args, **kwargs):
+            user=request.user
+            try:
+                product=self.get_product()
+                if product is None:
+                    return Response({"Not Found": "Product not Fount"}, status=status.HTTP_404_NOT_FOUND)   
+                cart_item=CartItem.objects.get(user=user,product=product)
+                new_stock_quantity= product.stock_quantity-cart_item.quantity
+                product.stock_quantity=new_stock_quantity
+                product.save()
+
+                cart_item.delete()
+                return Response({"ok":" you removed the product from the cart"}, status=status.HTTP_202_ACCEPTED)
+            except CartItem.DoesNotExist:
+                return Response({"Not Found": "CartItem not Exist"}, status=status.HTTP_404_NOT_FOUND)
 
   
 
