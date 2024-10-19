@@ -9,14 +9,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 
 class ProductViewSet(ModelViewSet):
-    queryset = Product.objects.all()
+    queryset = Product.objects.prefetch_related("category")
     serializer_class = ProductSerializer
     # allow any to be the defauit and change it if we need
     permission_classes=[AllowAny]
-
-
-
-    
     def list(self, request, *args, **kwargs):
         queryset = self.queryset
         # search with category id/s

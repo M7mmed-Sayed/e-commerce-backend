@@ -41,13 +41,7 @@ class StripeCheckoutView(CreateAPIView):
                 order_serializer = self.get_serializer(data=order_data)
                 if order_serializer.is_valid():
                     order = order_serializer.save(user=user, shipping_cost=5, order_status=OrderStatus.NONE)
-                for cart_item in cart_items:
-                    product = cart_item.product
-                    if product.stock_quantity < cart_item.quantity:
-                        return Response({'Product': f"Not enough  product at {product.name} stock_quantity."},
-                                        status=status.HTTP_400_BAD_REQUEST)
                     # product.stock_quantity -= cart_item.quantity
-                    product.save()
                     OrderItem.objects.create(
                         order=order,
                         user=user,
