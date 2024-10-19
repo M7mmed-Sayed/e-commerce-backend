@@ -1,11 +1,19 @@
 from django.contrib import admin
-
-# Register your models here.
+from django.db.models import Q
 from django.contrib import admin
-from .models import CartItem,OrderItem,Order
-
-# Register your models here.
-admin.site.register(Order)
+import stripe.error
+from .models import CartItem,Order,OrderItem
+import logging
+from django.conf import settings
+from django.contrib import admin
+import stripe
+from .admins import OrderAdmin,OrderItemAdmin
+stripe.api_key = settings.STRIPE_SECRET_KEY
+logger = logging.getLogger('ecommerce')
 
 admin.site.register(CartItem)
-admin.site.register(OrderItem)
+admin.site.register(OrderItem,OrderItemAdmin)
+admin.site.register(Order,OrderAdmin)
+
+
+

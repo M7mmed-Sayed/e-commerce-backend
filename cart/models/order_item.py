@@ -11,3 +11,12 @@ class OrderItem(models.Model):
     order_item_price = models.DecimalField(max_digits=8, decimal_places=2)  # the cost for the product is not static so maybe the product price up/dwon , when i wanna to list the items it's giving me the cost of item at the order not the current product pricr
     def __str__(self):
         return f'{self.quantity} -- {self.product} -- {self.order_item_price}'
+    @property
+    def orignal_price(self):
+        return self.product.price
+    @property
+    def order_status(self):
+        return self.order.order_status
+    @property
+    def created_at(self):
+        return self.order.created_at
