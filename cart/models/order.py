@@ -3,6 +3,7 @@ from accounts.models import AppUser
 from products.models import Product
 class OrderStatus(models.TextChoices):
     NONE = "NONE", "None"
+    REFUND = "REFUND", "Refund"
     PROCESSING = "PROCESSING", "Processing"
     SHIPPED = "SHIPPED", "Shipped"
     DELIVERED = "DELIVERED", "Delivered"
@@ -15,7 +16,7 @@ class Order(models.Model):
     payment_id = models.CharField(max_length=255,null=True)
     shipping_cost = models.DecimalField(max_digits=7, decimal_places=2,null=True)
     def __str__(self):
-        return f'{self.shipping_address} -- {self.shipping_cost} -- {self.user}'
+        return f'{self.id}'
 
    
     
