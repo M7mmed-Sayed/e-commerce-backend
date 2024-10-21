@@ -87,8 +87,6 @@ class OrderViewSet(ModelViewSet):
     def get_queryset(self):
         user=self.request.user
         query_set=Order.objects.filter(user=user)
-        if self.request.user.usertype not in[ UserType.ADMIN,UserType.EMPLOYEE]:
-            query_set=Order.objects.filter(user=user)
         return query_set
 
 
