@@ -1,3 +1,2 @@
 from .cart_item_serializers import CartItemSerializer
 from .order_serializers import OrderSerializer
-from .card_serializers import CardInformationSerializer
