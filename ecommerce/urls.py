@@ -23,15 +23,17 @@ from rest_framework.permissions import AllowAny
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Snippets API",
-        default_version='v1',
-        description="Test description",
+        title="E Commerce API",
+        default_version='v4',
+        description="API collection for  E-commerce System",
         terms_of_service="https://www.google.com/policies/terms/",
-        contact=openapi.Contact(email="mohamedsayed1167@gmail.com"),
-        license=openapi.License(name="BSD License"),
+        contact=openapi.Contact(email="mohamedsayed1167@gmail.com",name="Mohamed Sayed",url='https://www.linkedin.com/in/m7mmed-sayed/' ),
+        license=openapi.License(name="BSD License",url="https://github.com/M7mmed-Sayed/e-commerce-backend"),
+
     ),
     public=True,
     permission_classes=(AllowAny,),
+
 )
 urlpatterns = [
     # swagger docummentation
