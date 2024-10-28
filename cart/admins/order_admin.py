@@ -29,9 +29,11 @@ class OrderAdmin(admin.ModelAdmin):
                 if refund.status=="succeeded":
                     obj.order_status=OrderStatus.REFUND
                     obj.save()
+                    logger.info(f' Successful refund object id: {obj.id} payment intent:{obj.payment_id} ')
                     messages.success(request, f'Successful refund object id: {obj.id} payment intent:{obj.payment_id}  ')
                 else:
-                    logger.info(f'Ub Successful refund object id: {obj.id} payment intent:{obj.payment_id} ')
+                    logger.error(f'Un Successful refund object id: {obj.id} payment intent:{obj.payment_id} ')
+                    
             except Exception as e:
                 logger.warning(f'Un Successful refund object id: {obj.id} payment intent:{obj.payment_id}  {e}')
                 messages.warning(request, f'Un Successful refund object id: {obj.id} payment intent:{obj.payment_id} Exception {e} ')
