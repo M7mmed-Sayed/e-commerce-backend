@@ -1,7 +1,7 @@
 
 from django.contrib import admin
 from django.urls import path
-from .views import CategoryViewSet,ProductViewSet
+from .views import CategoryViewSet,ProductViewSet,ReviewViewSet
 urlpatterns = [
 
    #categories apis
@@ -25,7 +25,12 @@ urlpatterns = [
         'delete': 'destroy',  
         'put': 'update',  
          'get': 'retrieve',
-    }),name='product-datial')
+    }),name='product-datial'),
+    path('review/<int:product_pk>/', ReviewViewSet.as_view({ 
+        'post': 'create',
+        'get': 'list',
+        
+    }),name='review'),
 
 
 

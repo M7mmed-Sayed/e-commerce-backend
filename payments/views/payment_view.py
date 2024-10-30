@@ -19,7 +19,8 @@ from cart.models import CartItem, OrderItem, Order, OrderStatus
 from cart.serializers import OrderSerializer
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
-
+SUCCESS_URL=settings.SUCCESS_URL
+CANCEL_URL=settings.CANCEL_URL
 
 class StripeCheckoutView(CreateAPIView):
     serializer_class = OrderSerializer
@@ -41,21 +42,20 @@ class StripeCheckoutView(CreateAPIView):
                 order_serializer = self.get_serializer(data=order_data)
                 if order_serializer.is_valid():
                     order = order_serializer.save(user=user, shipping_cost=5, order_status=OrderStatus.NONE)
-                    # product.stock_quantity -= cart_item.quantity
-                    OrderItem.objects.create(
-                        order=order,
-                        user=user,
-                        product=product,
-                        quantity=cart_item.quantity,
-                        order_item_price=product.price
-                    )
+                    for cart_item in cart_items:
+                        product = cart_item.product
+                        OrderItem.objects.create(
+                            order=order,
+                            user=user,
+                            product=product,
+                            quantity=cart_item.quantity,
+                            order_item_price=product.price
+                        )
                     # cart_items.delete()
-
                     total = int(sum(item.product.price * item.quantity * 10 for item in cart_items))
                     # useing transaction to validate that
                     line_items = []
-
-                    shipping_cost = 200
+                    shipping_cost = 20
                     # items to ui
                     for item in cart_items:
                         line_items.append({
@@ -68,7 +68,6 @@ class StripeCheckoutView(CreateAPIView):
                             },
                             'quantity': item.quantity,
                         })
-
                     # shipping cost as cost
                     line_items.append({
                         'price_data': {
@@ -87,21 +86,22 @@ class StripeCheckoutView(CreateAPIView):
                         payment_method_types=['card'],
                         line_items=line_items,
                         mode='payment',
-                        success_url='http://127.0.0.1:8000' + '/cart/checkout/?session_id={CHECKOUT_SESSION_ID}',
-                        cancel_url='http://127.0.0.1:8000' + '/cart/',
+                        success_url=SUCCESS_URL,
+                        cancel_url=CANCEL_URL ,
                         payment_intent_data={
                             'metadata': {
                                 'order_id': order.id
-                            }
-                        }
+                            },
+                        },
+      
                     )
-                    print(order.id)
                     print(checkout_session.url)
-                    return Response({"message": checkout_session.url}, status=status.HTTP_200_OK)
+                    return Response({"payment-url": checkout_session.url}, status=status.HTTP_200_OK)
             except  Exception as e:
                 print(e)
                 transaction.set_rollback(True)
                 return Response({"message": 'no'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class StripePeymentView(CreateAPIView):

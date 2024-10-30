@@ -8,6 +8,7 @@ class ProductSerializer(serializers.ModelSerializer):
     rating = serializers.IntegerField(read_only=True)# it will update by value fo user review rating and product over rating will be rating/num_reviews
     id = serializers.IntegerField(read_only=True)
     seller=serializers.PrimaryKeyRelatedField(read_only=True)
+    ava_rating = serializers.SerializerMethodField()
     class Meta:
         model = Product
         fields = (
@@ -22,5 +23,10 @@ class ProductSerializer(serializers.ModelSerializer):
             'num_reviews',
             'created_at',
             'seller',
+            'ava_rating'
         )
         lookup_field = "id"
+    def get_ava_rating(self, obj):
+        if obj.num_reviews ==0:
+            return 0
+        return obj.rating / obj.num_reviews
