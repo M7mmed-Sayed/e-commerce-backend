@@ -5,27 +5,35 @@ This project is built using Django REST Framework to provide the backend API for
 
 Goal: Build a backend system for an online marketplace that supports users, products, orders, payments, and reviews.
 
-# setup
-#### 1.  create a new directory
-#### 2.  change to this directory
-#### 3.  clone  this Repo to the current directory
+# Setup
+#### Create a new directory
+#### Change to this directory
+#### Clone  this Repo to the current directory
 - `git clone https://github.com/M7mmed-Sayed/e-commerce-backend.git `
 
-#### 4. set up a virtual environment and activate it at Windows open ``` terminal ``` and write the following commands:
+#### Set up a virtual environment and activate it at Windows open ``` terminal ``` and write the following commands:
 1. `python -m pip install virtualenv`
 2. `python -m virtualenv venv`
 3. `venv\scripts\activate`
 4. `pip3 install -r requirements.txt`  to install required packages 
-### 5. Create stripe Payment GetWay
+### Create stripe Payment GetWay
 - Create Stripe  Account 
 - Get your  STRIPE_SECRET_KEY & STRIPE_PUBLISHABLE_KEY for `test_mode`
 - Create `.env` file separates your secrets from code and add `.env` to `.gitignore` file
 - set `STRIPE_SECRET_KEY= "sk_test_5.................."`
 - set `STRIPE_PUBLISHABLE_KEY= "pk_test_5_............"`
-- 
- #### 6. migrate database i'm using Mysql you can change as You like:
+- set `SUCCESS_URL ='http://127.0.0.1:8000/'`
+
+- set `CANCEL_URL ='http://127.0.0.1:8000/'`
+
+### Add Celery schedule tasks
+- add this two lines to `.env` celery broker with redis 
+- `CELERY_RESULT_BACKEND = "redis://localhost:6379"`
+- `CELERY_BROKER_URL="redis://localhost:6379"`
+
+ ####  migrate database i'm using Mysql you can change as You like:
  -  `py manage.py migrate`
- #### 7. Run the local server:
+ ####  Run the local server:
  - `py manage.py runserver 8000`
 
 # **Features**

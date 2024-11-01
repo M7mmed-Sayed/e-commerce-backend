@@ -6,3 +6,5 @@ pillow
 django-filter
 stripe
 python-dotenv
+celery
+redis

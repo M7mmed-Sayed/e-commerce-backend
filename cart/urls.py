@@ -1,7 +1,7 @@
 
 from django.contrib import admin
 from django.urls import path
-from .views import CartItemViewSet,CheckOutOrderView,OrderViewSet
+from .views import CartItemViewSet,CheckOutOrderView,OrderViewSet,test_celery_view
 urlpatterns = [
 
    #categories apis
@@ -27,6 +27,7 @@ urlpatterns = [
         'put': 'update',  
     
     }),name='order-datail'),
+    path('test-celery',test_celery_view,name='testing'),
    
 
 
