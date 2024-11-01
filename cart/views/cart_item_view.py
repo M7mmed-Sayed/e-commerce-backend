@@ -11,6 +11,12 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 from rest_framework.decorators import api_view,permission_classes
 from django.db import transaction
+from celery import shared_task
+from time import sleep
+from cart.models import OrderStatus,Order
+import logging
+logger = logging.getLogger('ecommerce')
+
 
 class CartItemViewSet(ModelViewSet):
     """
@@ -28,9 +34,15 @@ class CartItemViewSet(ModelViewSet):
         user=self.request.user
         product_pk = self.kwargs.get('product_pk', None)
         query_set=CartItem.objects.filter(user=user)
-        if product_pk is not None:
-            query_set=CartItem.objects.filter(user=user,product=self.get_product())
+        try:
+            product = Product.objects.get(pk=product_pk)
+        except Product.DoesNotExist:
+            return None
+        query_set=CartItem.objects.filter(user=user,product=product)
         return query_set
+        
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
 
     # ignore DRY i don't wanna to write a guery to get the product for each action ,i use method and call it from each Action 
     def get_product(self):
@@ -46,6 +58,7 @@ class CartItemViewSet(ModelViewSet):
         with transaction.atomic():
             user=request.user
             try:
+
                 product=self.get_product()
                 if product is None:
                     return Response({"Not Found": "Product not Fount"}, status=status.HTTP_404_NOT_FOUND)
