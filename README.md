@@ -43,6 +43,8 @@ Goal: Build a backend system for an online marketplace that supports users, prod
        - `/account/login/` POST login
        - `/account/logout/` POST logout
        - `/account/` GET the current Authorized user data
+       - `/accounts/otp-active/` POST Confirmation with OTP
+       - `/accounts/otp-resend/` POST Send New OTP to Email
        - `/account/update/{abc}` PUT update username data if it's Authorized and the current user username is `abc`
    - ## categories API 
        - `/products/category/` Post action only admins or employee can create  category
