@@ -48,7 +48,7 @@ class AppUser(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=30, blank=True)
     phone_number = models.CharField(max_length=15, blank=False)
     usertype = models.CharField(max_length=15, choices=UserType.choices, default=UserType.CUSTOMER)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     objects = AppUserManager()
     USERNAME_FIELD = 'email'
@@ -56,4 +56,14 @@ class AppUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+
+
+class OTP(models.Model):
+    otp_email = models.EmailField(unique=True)  
+    otp_expired_at = models.DateTimeField()
+    otp_code = models.CharField(max_length=12)
+    def __str__(self):
+        return f'{self.otp_email} {self.otp_code}'
+
 

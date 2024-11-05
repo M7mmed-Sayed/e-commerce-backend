@@ -1,5 +1,5 @@
 from rest_framework.generics import CreateAPIView, RetrieveAPIView, UpdateAPIView, GenericAPIView
-from .models import AppUser
+from .models import AppUser,OTP
 from .serializers import UserSerializer, UserLoginSerializer, UserUpdateSerializer
 from django.contrib.auth import authenticate
 from rest_framework import status
@@ -10,17 +10,44 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.core import serializers
 from rest_framework.viewsets import ModelViewSet
-
+from django.core.mail import send_mail
 from .serializers import UserLoginSerializer
 from django.core.cache import cache
+from .utility import verify_otp,generate_otp,otp_exp_date,send_mail_otp
 from datetime import datetime,timedelta
-
+from django.conf import settings
+me=settings.EMAIL_HOST_USER
+my_pass=settings.EMAIL_HOST_PASSWORD
+# import the necessary components first
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from django.db import transaction
+from django.utils import timezone
 
 # Create your views here.
+
 class RegisterNewAppUserView(CreateAPIView):
     queryset = AppUser.objects.all()
     serializer_class = UserSerializer
-
+    lookup_field="pk"
+    def create(self, request, *args, **kwargs):
+        with transaction.atomic():
+            serializer=self.get_serializer(data=request.data)
+            email=request.data.get("email",None)
+            name=request.data.get("first_name",None)
+            if serializer.is_valid():
+                serializer.save()
+                generated_otp_code=generate_otp()
+                new_otp=OTP(otp_email=email,otp_expired_at=otp_exp_date(),otp_code=generated_otp_code)
+                send_mail_otp(email,name,generated_otp_code)
+                new_otp.save()
+                print(generated_otp_code)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                transaction.set_rollback(True)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
     def perform_create(self, serializer):
         serializer.save()
 
@@ -110,10 +137,73 @@ class UserUpdateView(UpdateAPIView):
         return super().update(request, *args, **kwargs)
 
 
-""" 
-{
-    "email":  "admin2@admin.admin",
-    "password": "sayed111199"
-}
+@api_view(['POST'])
+def otp_active(request):
+    email=request.data.get("email",None)
+    otp=request.data.get("otp_code",None)
+    if email is None or otp is None:
+        return Response({"email-otp": "requerd data email and otp"}, status=status.HTTP_400_BAD_REQUEST)
+    with transaction.atomic():
+        try:
+            otp_object=OTP.objects.get(otp_email=email)
+            app_user=AppUser.objects.get(email=email)
+            valid_otp=otp_object.otp_code
+            expired_otp=otp_object.otp_expired_at
+            time_now=timezone.now()
+            if verify_otp(otp,valid_otp)==False:
+                return Response({"invalid OTP": "Invalid"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if expired_otp< time_now:
+                return Response({"expired otp": "expired"}, status=status.HTTP_400_BAD_REQUEST)
+            app_user.is_active=True
+            otp_object.delete()
+            return Response({"verified": "thanks"}, status=status.HTTP_200_OK)
 
- """
+        except OTP.DoesNotExist:
+            transaction.set_rollback(True)
+            return Response({"invalid Email": "you have to sign up"}, status=status.HTTP_400_BAD_REQUEST)
+        except AppUser.DoesNotExist:
+            transaction.set_rollback(True)
+            return Response({"invalid Email": "you have to sign up"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            transaction.set_rollback(True)
+            print(e)
+            return Response({"Exception": "you have to sign up"}, status=status.HTTP_400_BAD_REQUEST)
+
+        
+
+@api_view(['POST'])
+def otp_refresh(request):
+    email=request.data.get("email",None)
+    if email is None :
+        return Response({"email": "required data- email "}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        otp_object=OTP.objects.get(otp_email=email)
+        app_user=AppUser.objects.get(email=email)
+        generated_otp_code=generate_otp()
+        generated_otp_date=otp_exp_date()
+        otp_object.otp_expired_at=generated_otp_date
+        otp_object.otp_code=generated_otp_code
+        otp_object.save()
+        
+        #send_mail_otp(email,app_user.first_name,generated_otp_code)
+        return Response({"message":"check your email with new otp"}, status=status.HTTP_200_OK)
+    except OTP.DoesNotExist:
+        return Response({"Exception": "you have to sign up"}, status=status.HTTP_400_BAD_REQUEST)
+    except AppUser.DoesNotExist:
+        return Response({"Exception": "you have to sign up"}, status=status.HTTP_400_BAD_REQUEST)
+
+    
+
+
+
+
+
+@api_view(['POST'])
+def send_mail_test(request):
+    subject = 'Test Email'
+    message = 'This is a test email sent using SMTP in Django.'
+    recipient_list = ['mohamedsayed1167@gmail.com']
+    
+    send_mail(subject=subject, message=message, recipient_list=recipient_list,fail_silently=False,from_email=None)
+    return Response({"message": "send ok XD :)"}, status=status.HTTP_200_OK)

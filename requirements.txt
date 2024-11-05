@@ -8,3 +8,5 @@ stripe
 python-dotenv
 celery
 redis
+django-otp
+pyotp
